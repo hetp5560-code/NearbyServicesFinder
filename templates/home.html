@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Nearby Services Finder</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+
+    height:100vh;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    background:linear-gradient(rgba(0,0,0,.45),rgba(0,0,0,.45)),
+    url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80");
+
+    background-size:cover;
+    background-position:center;
+}
+
+.box{
+
+    width:450px;
+
+    background:white;
+
+    padding:35px;
+
+    border-radius:20px;
+
+    box-shadow:0 15px 40px rgba(0,0,0,.3);
+
+    text-align:center;
+}
+
+h1{
+
+    color:#2563eb;
+
+    margin-bottom:10px;
+}
+
+p{
+
+    color:#666;
+
+    margin-bottom:25px;
+}
+
+select{
+
+    width:100%;
+
+    padding:14px;
+
+    margin-top:15px;
+
+    border:1px solid #ddd;
+
+    border-radius:10px;
+
+    font-size:16px;
+
+    outline:none;
+}
+
+select:focus{
+
+    border-color:#2563eb;
+}
+
+button{
+
+    width:100%;
+
+    padding:15px;
+
+    margin-top:25px;
+
+    background:#2563eb;
+
+    color:white;
+
+    border:none;
+
+    border-radius:10px;
+
+    font-size:18px;
+
+    cursor:pointer;
+
+    transition:.3s;
+}
+
+button:hover{
+
+    background:#1d4ed8;
+}
+
+.services{
+
+    display:grid;
+
+    grid-template-columns:repeat(2,1fr);
+
+    gap:15px;
+
+    margin-top:30px;
+}
+
+.card{
+
+    background:#f5f7ff;
+
+    padding:20px;
+
+    border-radius:12px;
+
+    font-weight:600;
+
+    transition:.3s;
+}
+
+.card:hover{
+
+    background:#2563eb;
+
+    color:white;
+
+    transform:translateY(-5px);
+}
+
+.footer{
+
+    margin-top:25px;
+
+    font-size:13px;
+
+    color:#777;
+}
+select,input{
+
+    width:100%;
+
+    padding:14px;
+
+    margin-top:15px;
+
+    border:1px solid #ddd;
+
+    border-radius:10px;
+
+    font-size:16px;
+
+    outline:none;
+}
+@media screen and (max-width: 768px){
+
+    .container{
+        flex-direction:column;
+        padding:10px;
+    }
+
+    .sidebar{
+        width:100%;
+        order:2;
+    }
+
+    #map{
+        width:100%;
+        height:400px;
+        order:1;
+    }
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>🌍 Nearby Services Finder</h1>
+
+<p>Find Nearby Hospitals, Hotels, Cafes & Petrol Pumps</p>
+
+<form action="/search-page" method="POST">
+
+<select name="search_type" required>
+    <option value="district">📍 District Search</option>
+    <option value="address">🔎 Address Search</option>
+</select>
+
+<input
+type="text"
+name="address"
+placeholder="Enter City or Address">
+
+<select name="district">
+
+<option value="">📍 Select District</option>
+
+<option value="Ahmedabad">Ahmedabad</option>
+<option value="Surat">Surat</option>
+<option value="Rajkot">Rajkot</option>
+<option value="Vadodara">Vadodara</option>
+<option value="Bhavnagar">Bhavnagar</option>
+<option value="Jamnagar">Jamnagar</option>
+<option value="Junagadh">Junagadh</option>
+<option value="Anand">Anand</option>
+<option value="Bharuch">Bharuch</option>
+<option value="Gandhinagar">Gandhinagar</option>
+
+</select>
+
+<select name="service" required>
+
+<option value="">🏢 Select Service</option>
+
+<option value="hospital">🏥 Hospital</option>
+<option value="hotel">🏨 Hotel</option>
+<option value="cafe">☕ Cafe</option>
+<option value="fuel">⛽ Petrol Pump</option>
+
+</select>
+
+<select name="radius" required>
+
+<option value="10000">10 KM</option>
+<option value="20000">20 KM</option>
+<option value="30000">30 KM</option>
+<option value="40000">40 KM</option>
+<option value="50000">50 KM</option>
+<option value="100000">100 KM</option>
+
+</select>
+
+<button type="submit">
+🔍 Search Nearby
+</button>
+
+</form>
+
+<div class="services">
+
+<div class="card">🏥 Hospital</div>
+
+<div class="card">🏨 Hotel</div>
+
+<div class="card">☕ Cafe</div>
+
+<div class="card">⛽ Petrol Pump</div>
+
+</div>
+
+<div class="footer">
+
+© 2026 Nearby Services Finder
+
+</div>
+
+</div>
+
+</body>
+</html>
