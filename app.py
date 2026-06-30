@@ -1,8 +1,12 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import requests
+import pymysql
+
+from werkzeug.security import generate_password_hash, check_password_hash
+from config import connection
 
 app = Flask(__name__)
-
+app.secret_key = "nearby_services_finder_secret"
 # Gujarat District Coordinates
 districts = {
     "Ahmedabad": (23.0225, 72.5714),
@@ -19,8 +23,82 @@ districts = {
 
 @app.route("/")
 def home():
-    return render_template("home.html")
+    return render_template(
+        "home.html",
+        username=session.get("user_name")
+    )
+    
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
 
+    if request.method == "POST":
+
+        fullname = request.form["fullname"].strip()
+        email = request.form["email"].strip().lower()
+        password = request.form["password"]
+
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        cursor.execute(
+            "SELECT id FROM users WHERE email=%s",
+            (email,)
+        )
+
+        if cursor.fetchone():
+            return "Email already exists."
+
+        password = generate_password_hash(password)
+
+        cursor.execute(
+            """
+            INSERT INTO users(fullname,email,password)
+            VALUES(%s,%s,%s)
+            """,
+            (fullname,email,password)
+        )
+
+        connection.commit()
+
+        return redirect("/login")
+
+    return render_template("signup.html")
+
+
+@app.route("/login", methods=["GET", "POST"])
+def login():
+
+    if request.method == "POST":
+
+        email = request.form["email"].strip().lower()
+        password = request.form["password"]
+
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        cursor.execute(
+            "SELECT * FROM users WHERE email=%s",
+            (email,)
+        )
+
+        user = cursor.fetchone()
+
+        if user and check_password_hash(user["password"], password):
+
+            session["user_id"] = user["id"]
+            session["user_name"] = user["fullname"]
+
+            return redirect("/")
+
+        return "Invalid Email or Password"
+
+    return render_template("login.html")
+
+
+@app.route("/logout")
+def logout():
+
+    session.clear()
+
+    return redirect("/")
 
 @app.route("/search-page", methods=["POST"])
 def search_page():
