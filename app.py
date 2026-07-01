@@ -31,13 +31,21 @@ def home():
     return render_template("home.html")
 
 
-@app.route("/login")
+@app.route("/login", methods=["GET", "POST"])
 def login():
+
+    if request.method == "POST":
+        return "Login form submitted successfully"
+
     return render_template("login.html")
 
 
-@app.route("/signup")
+@app.route("/signup", methods=["GET", "POST"])
 def signup():
+
+    if request.method == "POST":
+        return "Signup form submitted successfully"
+
     return render_template("signup.html")
 
 
