@@ -29,6 +29,13 @@ def index():
 @app.route("/home")
 def home():
     return render_template("home.html")
+    @app.route("/login")
+def login():
+    return "Login page coming soon"
+
+@app.route("/signup")
+def signup():
+    return "Signup page coming soon"
 
 
 # @app.route("/signup", methods=["GET", "POST"])
