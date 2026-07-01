@@ -29,13 +29,16 @@ def index():
 @app.route("/home")
 def home():
     return render_template("home.html")
-    @app.route("/login")
+
+
+@app.route("/login")
 def login():
-    return "Login page coming soon"
+    return render_template("login.html")
+
 
 @app.route("/signup")
 def signup():
-    return "Signup page coming soon"
+    return render_template("signup.html")
 
 
 # @app.route("/signup", methods=["GET", "POST"])
