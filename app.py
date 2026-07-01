@@ -35,7 +35,7 @@ def home():
 def login():
 
     if request.method == "POST":
-        return "Login form submitted successfully"
+        return redirect("/home")
 
     return render_template("login.html")
 
@@ -44,7 +44,7 @@ def login():
 def signup():
 
     if request.method == "POST":
-        return "Signup form submitted successfully"
+        return redirect("/login")
 
     return render_template("signup.html")
 
