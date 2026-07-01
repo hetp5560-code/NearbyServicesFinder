@@ -168,6 +168,56 @@ select,input{
 
     outline:none;
 }
+.profile{
+    position:absolute;
+    top:20px;
+    right:20px;
+}
+
+.profile-btn{
+    background:#2563eb;
+    color:white;
+    padding:12px 18px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+}
+
+.profile-menu{
+    display:none;
+    position:absolute;
+    right:0;
+    top:55px;
+    width:260px;
+    background:white;
+    padding:15px;
+    border-radius:12px;
+    box-shadow:0 5px 20px rgba(0,0,0,.25);
+    z-index:1000;
+}
+
+.profile:hover .profile-menu{
+    display:block;
+}
+
+.profile-menu p{
+    margin:8px 0;
+    color:black;
+}
+
+.profile-menu hr{
+    margin:10px 0;
+}
+
+.profile-menu a{
+    display:block;
+    text-align:center;
+    background:#ef4444;
+    color:white;
+    padding:10px;
+    border-radius:8px;
+    text-decoration:none;
+}
 @media screen and (max-width: 768px){
 
     .container{
@@ -193,6 +243,45 @@ select,input{
 <body>
 
 <div class="box">
+    <div style="position:absolute;top:20px;right:20px;">
+
+{% if session.get('user_id') %}
+
+<div class="profile">
+
+<div class="profile-btn">
+👤 {{ session.get('user_name') }} ▼
+</div>
+
+<div class="profile-menu">
+
+<p><strong>{{ session.get('user_name') }}</strong></p>
+
+<p>📧 {{ session.get('user_email') }}</p>
+
+<hr>
+
+<a href="/logout">Logout</a>
+
+</div>
+
+</div>
+
+{% else %}
+
+<a href="/login"
+style="background:#2563eb;color:white;padding:10px 15px;border-radius:8px;text-decoration:none;margin-right:10px;">
+Login
+</a>
+
+<a href="/signup"
+style="background:green;color:white;padding:10px 15px;border-radius:8px;text-decoration:none;">
+Sign Up
+</a>
+
+{% endif %}
+
+</div>
 
 <h1>🌍 Nearby Services Finder</h1>
 

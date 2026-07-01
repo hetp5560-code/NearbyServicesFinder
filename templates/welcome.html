@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Nearby Services Finder</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+
+height:100vh;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+background:linear-gradient(rgba(0,0,0,.55),rgba(0,0,0,.55)),
+url("https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1600&q=80");
+
+background-size:cover;
+background-position:center;
+overflow:hidden;
+
+}
+
+.box{
+
+width:520px;
+
+background:rgba(255,255,255,.12);
+
+backdrop-filter:blur(15px);
+
+padding:40px;
+
+border-radius:20px;
+
+text-align:center;
+
+color:white;
+
+box-shadow:0 10px 40px rgba(0,0,0,.4);
+
+animation:fade 1s ease;
+
+}
+
+h1{
+
+font-size:38px;
+
+margin-bottom:15px;
+
+}
+
+p{
+
+font-size:18px;
+
+line-height:30px;
+
+margin-bottom:30px;
+
+}
+
+.btn{
+
+display:block;
+
+width:100%;
+
+padding:15px;
+
+margin-top:15px;
+
+background:#2563eb;
+
+color:white;
+
+text-decoration:none;
+
+border-radius:10px;
+
+font-size:18px;
+
+transition:.3s;
+
+}
+
+.btn:hover{
+
+background:#1d4ed8;
+
+transform:translateY(-3px);
+
+}
+
+.signup{
+
+background:#16a34a;
+
+}
+
+.signup:hover{
+
+background:#15803d;
+
+}
+
+@keyframes fade{
+
+from{
+
+opacity:0;
+
+transform:translateY(40px);
+
+}
+
+to{
+
+opacity:1;
+
+transform:translateY(0);
+
+}
+
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>🌍 Nearby Services Finder</h1>
+
+<p>
+
+Find Nearby Hospitals, Hotels, Cafes,
+
+Petrol Pumps and many more services
+
+with accurate location.
+
+</p>
+
+<a href="/login" class="btn">
+
+🔐 Login
+
+</a>
+
+<a href="/signup" class="btn signup">
+
+📝 Sign Up
+
+</a>
+
+</div>
+
+</body>
+
+</html>
