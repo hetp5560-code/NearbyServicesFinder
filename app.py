@@ -117,12 +117,12 @@ def signup():
 #     return render_template("login.html")
 
 
-# @app.route("/logout")
-# def logout():
+@app.route("/logout")
+def logout():
 
-#     session.clear()
+    session.clear()
 
-#     return redirect("/")
+    return redirect("/")
 
 @app.route("/search-page", methods=["POST"])
 def search_page():
