@@ -23,23 +23,12 @@ districts = {
 
 @app.route("/")
 def index():
-
-    if "user_id" in session:
-        return redirect("/home")
-
     return render_template("welcome.html")
 
 
 @app.route("/home")
 def home():
-
-    if "user_id" not in session:
-        return redirect("/login")
-
-    return render_template(
-        "home.html",
-        username=session.get("user_name")
-    )
+    return render_template("home.html")
 
 
 # @app.route("/signup", methods=["GET", "POST"])
