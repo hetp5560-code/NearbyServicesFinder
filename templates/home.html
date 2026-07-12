@@ -143,20 +143,17 @@ button:hover{
 
     transform:translateY(-5px);
 }
-@media(max-width:768px){
-    .profile{
-        top:80px;
-        right:10px;
-    }
+
 }
 .logout-btn{
     background:#2563eb;
     color:white;
-    padding:8px 12px;
-    border-radius:8px;
+    padding:6px 10px;
+    border-radius:6px;
     text-decoration:none;
     display:inline-block;
-    font-size:14px;
+    font-size:12px;
+    font-weight:600;
 }
 }
 /* 
@@ -255,6 +252,34 @@ select,input{
         order:1;
     }
 }
+</style>
+<style>
+
+/* Tamaro badho CSS */
+
+.profile{
+    position:absolute;
+    top:20px;
+    right:20px;
+}
+
+/* Aa last ma add karvu */
+@media(max-width:768px){
+    .profile{
+        top:80px;
+        right:10px;
+    }
+
+    .profile-btn{
+        padding:8px 12px;
+        font-size:14px;
+    }
+
+    .profile-menu{
+        width:180px;
+    }
+}
+
 </style>
 
 </head>
