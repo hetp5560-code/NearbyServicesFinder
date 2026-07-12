@@ -267,15 +267,11 @@ select,input{
 
 </div>
 
-<a href="/login"
-style="background:#2563eb;color:white;padding:10px 15px;border-radius:8px;text-decoration:none;margin-right:10px;">
-Login
-</a>
+{% else %}
 
-<a href="/signup"
-style="background:green;color:white;padding:10px 15px;border-radius:8px;text-decoration:none;">
-Sign Up
-</a>
+
+<a href="/logout">Logout</a>
+{% endif %}
 
 </div>
 
