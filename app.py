@@ -1,12 +1,28 @@
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 import requests
 import pymysql
+import random
+from datetime import datetime, timedelta
 
+from flask_mail import Mail, Message
 from werkzeug.security import generate_password_hash, check_password_hash
-# from config import connection
+from config import connection
 
 app = Flask(__name__)
+
 app.secret_key = "nearby_services_finder_secret"
+
+# Gmail SMTP Configuration
+app.config["MAIL_SERVER"] = "smtp.gmail.com"
+app.config["MAIL_PORT"] = 587
+app.config["MAIL_USE_TLS"] = True
+app.config["MAIL_USERNAME"] = "smartnearby.app@gmail.com"
+app.config["MAIL_PASSWORD"] = "myjxbaboxvcatcdp"
+
+mail = Mail(app)
+# from config import connection
+
+
 # Gujarat District Coordinates
 districts = {
     "Ahmedabad": (23.0225, 72.5714),
@@ -35,6 +51,43 @@ def home():
 def login():
 
     if request.method == "POST":
+
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        if not email or not password:
+            return "Email and password are required."
+
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        cursor.execute(
+            """
+            SELECT id, fullname, email, password, is_verified
+            FROM users
+            WHERE email=%s
+            """,
+            (email,)
+        )
+
+        user = cursor.fetchone()
+
+        # User not found
+        if not user:
+            return "Invalid Email or Password."
+
+        # Email not verified
+        if user["is_verified"] != 1:
+            return "Please verify your email with OTP before login."
+
+        # Check password
+        if not check_password_hash(user["password"], password):
+            return "Invalid Email or Password."
+
+        # Login successful
+        session["user_id"] = user["id"]
+        session["user_name"] = user["fullname"]
+        session["user_email"] = user["email"]
+
         return redirect("/home")
 
     return render_template("login.html")
@@ -44,10 +97,248 @@ def login():
 def signup():
 
     if request.method == "POST":
-        return redirect("/login")
+
+        fullname = request.form.get("fullname", "").strip()
+        email = request.form.get("email", "").strip().lower()
+        password = request.form.get("password", "")
+
+        # Validate fields
+        if not fullname or not email or not password:
+            return "All fields are required."
+
+        if len(password) < 8:
+            return "Password must be at least 8 characters."
+
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        # Check existing email
+        cursor.execute(
+            "SELECT id, is_verified FROM users WHERE email=%s",
+            (email,)
+        )
+
+        existing_user = cursor.fetchone()
+
+        if existing_user:
+
+            if existing_user["is_verified"] == 1:
+                cursor.close()
+                return "Email already registered. Please login."
+
+            user_id = existing_user["id"]
+
+            hashed_password = generate_password_hash(password)
+
+            cursor.execute(
+                """
+                UPDATE users
+                SET fullname=%s, password=%s
+                WHERE id=%s
+                """,
+                (fullname, hashed_password, user_id)
+            )
+
+        else:
+
+            hashed_password = generate_password_hash(password)
+
+            cursor.execute(
+                """
+                INSERT INTO users
+                (fullname, email, password, is_verified)
+                VALUES (%s, %s, %s, 0)
+                """,
+                (fullname, email, hashed_password)
+            )
+
+            connection.commit()
+
+            user_id = cursor.lastrowid
+
+        # Generate OTP
+        otp = str(random.randint(100000, 999999))
+
+        # OTP expires after 5 minutes
+        expires_at = datetime.now() + timedelta(minutes=5)
+
+        # Delete old OTP
+        cursor.execute(
+            """
+            DELETE FROM otp_verification
+            WHERE user_id=%s AND purpose='signup'
+            """,
+            (user_id,)
+        )
+
+        # Save new OTP
+        cursor.execute(
+            """
+            INSERT INTO otp_verification
+            (user_id, otp_code, purpose, expires_at)
+            VALUES (%s, %s, 'signup', %s)
+            """,
+            (user_id, otp, expires_at)
+        )
+
+        connection.commit()
+
+        # Send OTP
+        try:
+
+            msg = Message(
+                subject="Nearby Services Finder - Email Verification",
+                sender=app.config["MAIL_USERNAME"],
+                recipients=[email]
+            )
+
+            msg.body = f"""
+Hello {fullname},
+
+Thank you for registering with Nearby Services Finder.
+
+Your verification OTP is:
+
+{otp}
+
+This OTP is valid for 5 minutes.
+
+Please do not share this OTP with anyone.
+
+Regards,
+Nearby Services Finder
+"""
+
+            mail.send(msg)
+
+        except Exception as e:
+
+            print("EMAIL ERROR:", e)
+            cursor.close()
+
+            return f"Unable to send OTP email. Error: {e}"
+
+        cursor.close()
+
+        # Store temporary verification information
+        session["otp_user_id"] = user_id
+        session["otp_email"] = email
+
+        return redirect("/verify-otp")
 
     return render_template("signup.html")
+@app.route("/verify-otp", methods=["GET", "POST"])
+def verify_otp():
 
+    user_id = session.get("otp_user_id")
+
+    if not user_id:
+        return redirect("/signup")
+
+    if request.method == "POST":
+
+        otp = request.form.get("otp", "").strip()
+
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM otp_verification
+            WHERE user_id=%s
+            AND purpose='signup'
+            AND verified=0
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+
+        otp_record = cursor.fetchone()
+
+        if not otp_record:
+            cursor.close()
+            return render_template(
+                "verify-otp.html",
+                email=session.get("otp_email"),
+                error="OTP not found."
+            )
+
+        if datetime.now() > otp_record["expires_at"]:
+            cursor.close()
+            return render_template(
+                "verify-otp.html",
+                email=session.get("otp_email"),
+                error="OTP has expired. Please signup again."
+            )
+
+        if otp != otp_record["otp_code"]:
+
+            cursor.execute(
+                """
+                UPDATE otp_verification
+                SET attempts = attempts + 1
+                WHERE id=%s
+                """,
+                (otp_record["id"],)
+            )
+
+            connection.commit()
+            cursor.close()
+
+            return render_template(
+                "verify-otp.html",
+                email=session.get("otp_email"),
+                error="Invalid OTP. Please try again."
+            )
+
+        # OTP correct
+        cursor.execute(
+            """
+            UPDATE users
+            SET is_verified=1
+            WHERE id=%s
+            """,
+            (user_id,)
+        )
+
+        cursor.execute(
+            """
+            UPDATE otp_verification
+            SET verified=1
+            WHERE id=%s
+            """,
+            (otp_record["id"],)
+        )
+
+        connection.commit()
+
+        cursor.execute(
+            """
+            SELECT id, fullname, email
+            FROM users
+            WHERE id=%s
+            """,
+            (user_id,)
+        )
+
+        user = cursor.fetchone()
+
+        cursor.close()
+
+        # Login user
+        session["user_id"] = user["id"]
+        session["user_name"] = user["fullname"]
+        session["user_email"] = user["email"]
+
+        session.pop("otp_user_id", None)
+        session.pop("otp_email", None)
+
+        return redirect("/home")
+
+    return render_template(
+        "verify-otp.html",
+        email=session.get("otp_email")
+    )
 
 # @app.route("/signup", methods=["GET", "POST"])
 # def signup():
