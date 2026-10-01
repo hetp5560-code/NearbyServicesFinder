@@ -92,6 +92,236 @@ def login():
 
     return render_template("login.html")
 
+@app.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+
+    if request.method == "POST":
+
+        email = request.form.get("email", "").strip().lower()
+
+        if not email:
+            return "Email is required."
+
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        cursor.execute(
+            """
+            SELECT id, fullname, email, is_verified
+            FROM users
+            WHERE email=%s
+            """,
+            (email,)
+        )
+
+        user = cursor.fetchone()
+
+        if not user:
+            cursor.close()
+            return "Email not registered."
+
+        if user["is_verified"] != 1:
+            cursor.close()
+            return "Please verify your email first."
+
+        # Generate OTP
+        otp = str(random.randint(100000, 999999))
+
+        # OTP valid for 5 minutes
+        expires_at = datetime.now() + timedelta(minutes=5)
+
+        # Delete old forgot-password OTP
+        cursor.execute(
+            """
+            DELETE FROM otp_verification
+            WHERE user_id=%s AND purpose='forgot_password'
+            """,
+            (user["id"],)
+        )
+
+        # Save new OTP
+        cursor.execute(
+            """
+            INSERT INTO otp_verification
+            (user_id, otp_code, purpose, expires_at)
+            VALUES (%s, %s, 'forgot_password', %s)
+            """,
+            (user["id"], otp, expires_at)
+        )
+
+        connection.commit()
+
+        # Send OTP email
+        try:
+
+            msg = Message(
+                subject="Nearby Services Finder - Password Reset OTP",
+                sender=app.config["MAIL_USERNAME"],
+                recipients=[email]
+            )
+
+            msg.body = f"""
+Hello {user["fullname"]},
+
+Your password reset OTP for Nearby Services Finder is:
+
+{otp}
+
+This OTP is valid for 5 minutes.
+
+Please do not share this OTP with anyone.
+
+Regards,
+Nearby Services Finder
+"""
+
+            mail.send(msg)
+
+        except Exception as e:
+
+            print("EMAIL ERROR:", e)
+            cursor.close()
+
+            return f"Unable to send OTP email. Error: {e}"
+
+        cursor.close()
+
+        session["forgot_user_id"] = user["id"]
+        session["forgot_email"] = email
+
+        return redirect("/verify-forgot-otp")
+
+    return render_template("forgot-password.html")
+@app.route("/verify-forgot-otp", methods=["GET", "POST"])
+def verify_forgot_otp():
+
+    user_id = session.get("forgot_user_id")
+
+    if not user_id:
+        return redirect("/forgot-password")
+
+    if request.method == "POST":
+
+        otp = request.form.get("otp", "").strip()
+
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        cursor.execute(
+            """
+            SELECT *
+            FROM otp_verification
+            WHERE user_id=%s
+            AND purpose='forgot_password'
+            AND verified=0
+            ORDER BY id DESC
+            LIMIT 1
+            """,
+            (user_id,)
+        )
+
+        otp_record = cursor.fetchone()
+
+        if not otp_record:
+            cursor.close()
+            return render_template(
+                "verify-forgot-otp.html",
+                email=session.get("forgot_email"),
+                error="OTP not found."
+            )
+
+        if datetime.now() > otp_record["expires_at"]:
+            cursor.close()
+            return render_template(
+                "verify-forgot-otp.html",
+                email=session.get("forgot_email"),
+                error="OTP has expired. Please try again."
+            )
+
+        if otp != otp_record["otp_code"]:
+
+            cursor.execute(
+                """
+                UPDATE otp_verification
+                SET attempts = attempts + 1
+                WHERE id=%s
+                """,
+                (otp_record["id"],)
+            )
+
+            connection.commit()
+            cursor.close()
+
+            return render_template(
+                "verify-forgot-otp.html",
+                email=session.get("forgot_email"),
+                error="Invalid OTP. Please try again."
+            )
+
+        # OTP correct
+        cursor.execute(
+            """
+            UPDATE otp_verification
+            SET verified=1
+            WHERE id=%s
+            """,
+            (otp_record["id"],)
+        )
+
+        connection.commit()
+        cursor.close()
+
+        session["reset_user_id"] = user_id
+
+        return redirect("/reset-password")
+
+    return render_template(
+        "verify-forgot-otp.html",
+        email=session.get("forgot_email")
+    )
+@app.route("/reset-password", methods=["GET", "POST"])
+def reset_password():
+
+    user_id = session.get("reset_user_id")
+
+    if not user_id:
+        return redirect("/forgot-password")
+
+    if request.method == "POST":
+
+        password = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if not password or not confirm_password:
+            return "All fields are required."
+
+        if len(password) < 8:
+            return "Password must be at least 8 characters."
+
+        if password != confirm_password:
+            return "Passwords do not match."
+
+        hashed_password = generate_password_hash(password)
+
+        cursor = connection.cursor()
+
+        cursor.execute(
+            """
+            UPDATE users
+            SET password=%s
+            WHERE id=%s
+            """,
+            (hashed_password, user_id)
+        )
+
+        connection.commit()
+        cursor.close()
+
+        session.pop("reset_user_id", None)
+        session.pop("forgot_user_id", None)
+        session.pop("forgot_email", None)
+
+        return redirect("/login")
+
+    return render_template("reset-password.html")
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
